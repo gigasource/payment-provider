@@ -1,0 +1,22 @@
+{
+  "name": "payment-provider",
+  "version": "1.0.0",
+  "description": "Library for payment providers like PayPal, adyen, klanar,... etc",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gigasource/payment-provider.git"
+  },
+  "author": "Gigasource",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gigasource/payment-provider/issues"
+  },
+  "homepage": "https://github.com/gigasource/payment-provider#readme",
+  "dependencies": {
+    "@paypal/checkout-server-sdk": "^1.0.2"
+  }
+}
