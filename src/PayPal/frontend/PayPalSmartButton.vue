@@ -124,14 +124,14 @@
               height: 40
             },
             createOrder: async function (data, actions) {
-              if (this.useCustomCreateOrder) {
+              if (_this.useCustomCreateOrder) {
                 _this.$emit('onCreateOrder', data)
               } else {
                 return actions.order.create(_this.orderInfo);
               }
             },
             onApprove: async function (data, actions) {
-              if (this.useCustomCaptureOrder) {
+              if (_this.useCustomCaptureOrder) {
                 _this.$emit('onApprove', data)
               } else {
                 return actions.order.capture().then(function(details) {
