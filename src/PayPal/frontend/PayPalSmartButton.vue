@@ -132,8 +132,10 @@
             },
             onApprove: async function (data, actions) {
               if (_this.useCustomCaptureOrder) {
+                _this.debug && console.log('custom capture on approve')
                 _this.$emit('onApprove', data)
               } else {
+                _this.debug && console.log('immediately capture on approve')
                 return actions.order.capture().then(function(details) {
                   _this.$emit('onCaptured', details)
                 });
