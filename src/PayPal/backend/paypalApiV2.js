@@ -63,13 +63,12 @@ async function _execListTransactionRequest(payPalClient, query, debug) {
 async function getTransactions(payPalClient, {
   /*Allow filter*/
   start_date, end_date,
-  /*Allow options field to get transaction order detail*/
-  output,
   /*Pagination*/
   page_index,
   page_size,
   transaction_status,
   transaction_type,
+  /*Allow options field to get transaction order detail*/
   fields
 }) {
   const query =  { start_date, end_date };
