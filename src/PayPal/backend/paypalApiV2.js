@@ -3,30 +3,25 @@ const checkoutNodeJssdk = require('@paypal/checkout-server-sdk');
 const { TransactionsGetRequest } = require('./requests/transactionsGetRequest');
 
 async function captureOrder(payPalClient, orderId, debug=false) {
-  try {
-    const request = new checkoutNodeJssdk.orders.OrdersCaptureRequest(orderId);
-    request.requestBody({});
-    const response = await payPalClient.execute(request);
-    if (debug){
-      console.log("Status Code: " + response.statusCode);
-      console.log("Status: " + response.result.status);
-      console.log("Capture ID: " + response.result.id);
-      console.log("Links:");
-      response.result.links.forEach((item, index) => {
-        let rel = item.rel;
-        let href = item.href;
-        let method = item.method;
-        let message = `\t${rel}: ${href}\tCall Type: ${method}`;
-        console.log(message);
-      });
-      // To toggle print the whole body comment/uncomment the below line
-      console.log(JSON.stringify(response.result, null, 4));
-    }
-    return response;
+  const request = new checkoutNodeJssdk.orders.OrdersCaptureRequest(orderId);
+  request.requestBody({});
+  const response = await payPalClient.execute(request);
+  if (debug){
+    console.log("Status Code: " + response.statusCode);
+    console.log("Status: " + response.result.status);
+    console.log("Capture ID: " + response.result.id);
+    console.log("Links:");
+    response.result.links.forEach((item, index) => {
+      let rel = item.rel;
+      let href = item.href;
+      let method = item.method;
+      let message = `\t${rel}: ${href}\tCall Type: ${method}`;
+      console.log(message);
+    });
+    // To toggle print the whole body comment/uncomment the below line
+    console.log(JSON.stringify(response.result, null, 4));
   }
-  catch (e) {
-    console.log(e)
-  }
+  return response;
 }
 
 /**
@@ -38,15 +33,11 @@ async function captureOrder(payPalClient, orderId, debug=false) {
  * @private
  */
 async function _execListTransactionRequest(payPalClient, query, debug) {
-  try {
-    const request = new TransactionsGetRequest(query);
-    const response = await payPalClient.execute(request);
-    if (debug)
-      console.log(response);
-    return response
-  } catch (e) {
-    console.log(e)
-  }
+  const request = new TransactionsGetRequest(query);
+  const response = await payPalClient.execute(request);
+  if (debug)
+    console.log(response);
+  return response
 }
 
 /**
