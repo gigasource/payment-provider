@@ -2,6 +2,13 @@
 const checkoutNodeJssdk = require('@paypal/checkout-server-sdk');
 const { TransactionsGetRequest } = require('./requests/transactionsGetRequest');
 
+/**
+ * Capture transaction
+ * @param payPalClient
+ * @param orderId
+ * @param debug
+ * @returns {Promise<*>}
+ */
 async function captureOrder(payPalClient, orderId, debug=false) {
   const request = new checkoutNodeJssdk.orders.OrdersCaptureRequest(orderId);
   request.requestBody({});
@@ -22,6 +29,19 @@ async function captureOrder(payPalClient, orderId, debug=false) {
     console.log(JSON.stringify(response.result, null, 4));
   }
   return response;
+}
+
+
+/**
+ * Refund transaction
+ * @param payPalClient
+ * @param orderId
+ * @returns {Promise<void>}
+ */
+async function refund(payPalClient, captureId, refundRequest) {
+  const request = new checkoutNodeJssdk.payments.CapturesRefundRequest(captureId);
+  request.requestBody(refundRequest);
+  return await payPalClient.execute(request)
 }
 
 /**
@@ -148,6 +168,7 @@ async function getTransactionDetail(payPalClient, {
 
 module.exports = {
   captureOrder,
+  refund,
   getTransactions,
   getTransactionDetail,
 };
