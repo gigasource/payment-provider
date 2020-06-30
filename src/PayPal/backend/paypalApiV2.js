@@ -31,6 +31,17 @@ async function captureOrder(payPalClient, orderId, debug=false) {
   return response;
 }
 
+/**
+ * Get order details
+ * @param ppClient
+ * @param orderId
+ * @returns {Promise<void>}
+ */
+async function orderDetail(ppClient, orderId) {
+  const request = new checkoutNodeJssdk.orders.OrdersGetRequest(orderId)
+  return await ppClient.execute(request)
+}
+
 
 /**
  * Refund transaction
@@ -168,6 +179,7 @@ async function getTransactionDetail(payPalClient, {
 
 module.exports = {
   captureOrder,
+  orderDetail,
   refund,
   getTransactions,
   getTransactionDetail,
