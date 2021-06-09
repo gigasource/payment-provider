@@ -10,10 +10,10 @@
       // CONTAINER ------
       selfHost: Boolean,
       hostId: String,
-      
+
       // order items
       orderInfo: Object,
-      
+
       // query parameters
       clientId: String,
       merchantId: String,
@@ -27,7 +27,7 @@
       debug: Boolean,
       buyerCountry: String,
       locale: String,
-      
+
       // behavior
       /**
        * If useCustomCreateOrder is set, onCreateOrder event will be emit
@@ -106,42 +106,49 @@
           console.log('sdk is not loaded or order info is missing');
           return
         }
-        
+
         const _this = this;
         let container = document.getElementById(_this.containerId);
         if (!container) {
           console.log('PayPal container missing')
         } else {
           container.innerText = '';
-          // add new PayPal button
-          paypal.Buttons({
-            locale: 'en_US',
-            style: {
-              size: 'responsive',
-              color:  'gold',
-              shape:  'pill',
-              label:  'pay',
-              height: 40
-            },
-            createOrder: async function (data, actions) {
-              if (_this.useCustomCreateOrder) {
-                _this.$emit('onCreateOrder', data)
-              } else {
-                return actions.order.create(_this.orderInfo);
-              }
-            },
-            onApprove: async function (data, actions) {
-              if (_this.useCustomCaptureOrder) {
-                _this.debug && console.log('custom capture on approve')
-                _this.$emit('onApprove', data)
-              } else {
-                _this.debug && console.log('immediately capture on approve')
-                return actions.order.capture().then(function(details) {
-                  _this.$emit('onCaptured', details)
-                });
+
+          try {
+            const btnConfig = {
+              locale: 'en_US',
+              style: {
+                size: 'responsive',
+                color:  'gold',
+                shape:  'pill',
+                label:  'pay',
+                height: 40
+              },
+              createOrder: async function (data, actions) {
+                if (_this.useCustomCreateOrder) {
+                  _this.$emit('onCreateOrder', data)
+                } else {
+                  return actions.order.create(_this.orderInfo);
+                }
+              },
+              onApprove: async function (data, actions) {
+                if (_this.useCustomCaptureOrder) {
+                  _this.debug && console.log('custom capture on approve')
+                  _this.$emit('onApprove', data)
+                } else {
+                  _this.debug && console.log('immediately capture on approve')
+                  return actions.order.capture().then(function(details) {
+                    _this.$emit('onCaptured', details)
+                  });
+                }
               }
             }
-          }).render(`#${this.containerId}`);
+
+            paypal.Buttons(btnConfig).render(`#${this.containerId}`);
+          } catch (e) {
+            console.log('paypal', paypal)
+            console.error(e)
+          }
         }
       }
     }
