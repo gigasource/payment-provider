@@ -1,11 +1,21 @@
 <template>
-  <div v-if="selfHost" :id="containerId"></div>
+  <div v-if="selfHost" :id="containerId">
+    <div v-if="!sdkLoaded">
+      <slot></slot>
+    </div>
+    <div v-if="error">
+      <slot name="error" v-bind:error="error"></slot>
+    </div>
+  </div>
 </template>
 
 <script>
   // https://developer.paypal.com/docs/checkout/reference/customize-sdk/#query-parameters
   export default {
     name: 'PayPalSmartButton',
+    components: {
+
+    },
     props: {
       // CONTAINER ------
       selfHost: Boolean,
@@ -47,6 +57,7 @@
       return {
         sdkLoaded: false,
         containerId: this.selfHost ? `ppsb-${new Date().getTime()}` : this.hostId,
+        error: null
       }
     },
     mounted() {
@@ -148,6 +159,7 @@
           } catch (e) {
             console.log('paypal', paypal)
             console.error(e)
+            this.error = e.message
           }
         }
       }
