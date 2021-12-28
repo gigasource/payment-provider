@@ -1,35 +1,44 @@
 <template>
-  <form :action="action" method="post" id="payment-form">
+  <div class="mb-3">
+    <img src="https://files.readme.io/576b2c2-small-clover-logo.d034eaa6.png" style="height: 30px"/>
+  </div>
+
+  <form :action="action" method="post" id="payment-form" class="clover-payment-form">
     <div class="form-row top-row">
-      <div id="amount" class="field card-number">
-        <input name="amount" placeholder="Amount">
+      <div id="amount" class="rf-aic mb-3">
+        <span class="mr-2">Total price: </span>
+        <input name="amount" placeholder="Amount" :value="amount" readonly class="amount">
       </div>
     </div>
 
     <div class="form-row top-row">
+      Card information:
+    </div>
+
+    <div class="form-row top-row">
       <div id="card-number" class="field card-number"></div>
-      <div class="input-errors" id="card-number-errors" role="alert"></div>
     </div>
 
     <div class="form-row">
       <div id="card-date" class="field third-width"></div>
-      <div class="input-errors" id="card-date-errors" role="alert"></div>
     </div>
 
     <div class="form-row">
       <div id="card-cvv" class="field third-width"></div>
-      <div class="input-errors" id="card-cvv-errors" role="alert"></div>
     </div>
 
     <div class="form-row">
       <div id="card-postal-code" class="field third-width"></div>
-      <div class="input-errors" id="card-postal-code-errors" role="alert"></div>
     </div>
 
     <div id="card-response" role="alert"></div>
+    <div class="input-errors" id="card-number-errors" role="alert"></div>
+    <div class="input-errors" id="card-date-errors" role="alert"></div>
+    <div class="input-errors" id="card-cvv-errors" role="alert"></div>
+    <div class="input-errors" id="card-postal-code-errors" role="alert"></div>
 
     <div class="button-container">
-      <button>Submit Payment</button>
+      <button class="btn-submit">Submit Payment</button>
     </div>
   </form>
 </template>
@@ -39,6 +48,7 @@ export default {
   props: {
     production: Boolean,
     action: String,
+    amount: Number,
   },
   data: function () {
     return {
@@ -64,7 +74,7 @@ export default {
     const sdkHref = this.production ? 'https://checkout.clover.com/sdk.js' : 'https://checkout.sandbox.dev.clover.com/sdk.js'
     let script = document.querySelector(`script[src="${sdkHref}"]`);
     if (!script) {
-      console.log('Loading SquareSdk...');
+      console.log('Loading CloverSDK...');
       script = document.createElement('script');
       script.type = 'text/javascript';
       script.src = sdkHref;
@@ -86,27 +96,22 @@ export default {
       const clover = new Clover('39c7b87101f44739c823362203d21f89');
       const elements = clover.elements();
 
+      const inputStyle = {
+        'border': '1px solid #e0e0e0',
+        'border-radius': '6px',
+        'width': '20em',
+        'font-size': '18px',
+        'padding': '6px',
+        'margin': '3px',
+        'color': '#444444',
+        'height': '30px',
+      }
+
       const styles = {
-        'card-number input': {
-          'width': '20em',
-          'font-size': '20px',
-          'border': '1px gray dotted',
-          'padding': '3px',
-          'margin': '3px',
-          'font-weight': 'bold'
-        },
-        'card-number input': {
-          'background-color': '#BBBBBB'
-        },
-        'card-date input': {
-          'background-color': '#CCCCCC'
-        },
-        'card-cvv input': {
-          'background-color': '#DDDDDD'
-        },
-        'card-postal-code input': {
-          'background-color': '#EEEEEE'
-        }
+        'card-number input': inputStyle,
+        'card-date input': inputStyle,
+        'card-cvv input': inputStyle,
+        'card-postal-code input': inputStyle,
       };
 
       const form = document.getElementById('payment-form');
@@ -125,6 +130,13 @@ export default {
       const displayCardDateError = document.getElementById('card-date-errors');
       const displayCardCvvError = document.getElementById('card-cvv-errors');
       const displayCardPostalCodeError = document.getElementById('card-postal-code-errors');
+
+      const displayError = {
+        CARD_CVV: displayCardCvvError,
+        CARD_DATE: displayCardDateError,
+        CARD_NUMBER: displayCardNumberError,
+        CARD_POSTAL_CODE: displayCardPostalCodeError
+      }
 
       // Handle real-time validation errors from the card element
       cardNumber.addEventListener('change', function(event) {
@@ -159,14 +171,19 @@ export default {
         console.log(`cardPostalCode blur ${JSON.stringify(event)}`);
       });
 
+
+
       form.addEventListener('submit', function(event) {
         event.preventDefault();
         // Use the iframe's tokenization method with the user-entered card details
         clover.createToken()
         .then(function(result) {
           if (result.errors) {
-            Object.values(result.errors).forEach(function (value) {
-              displayError.textContent = value;
+            console.log('result.errors', result.errors)
+            Object.keys(result.errors).forEach(function (key) {
+              const value = result.errors[key];
+              debugger
+              displayError[key].innerText = value;
             });
           } else {
             cloverTokenHandler(result.token);
@@ -187,5 +204,53 @@ export default {
   }
 }
 </script>
-<style scoped>
+<style scoped lang="scss">
+.clover-payment-form {
+  .amount {
+    font-size: 18px;
+    font-weight: bold;
+    pointer-events: none;
+  }
+
+  .input-errors {
+    height: 20px;
+    color: #000;
+  }
+
+  .btn-cancel {
+    font-family: Arial;
+    font-size: 13px;
+    line-height: 28px;
+    display: inline-block;
+    margin-right: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 0 12px;
+    background: #e0e0e0;
+    color: #444;
+    cursor: pointer;
+    height: 28px;
+  }
+
+  .btn-submit {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 6px 12px;
+    background: #2979ff;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .input-errors {
+    color: #f55656;
+    font-size: small;
+    line-height: 20px;
+  }
+
+  :deep {
+    #card-number, #card-date, #card-cvv, #card-postal-code {
+      height: 36px !important;
+    }
+  }
+}
 </style>
