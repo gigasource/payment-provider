@@ -1,5 +1,5 @@
 <template>
-  <form action="/charge" method="post" id="payment-form">
+  <form :action="action" method="post" id="payment-form">
     <div class="form-row top-row">
       <div id="amount" class="field card-number">
         <input name="amount" placeholder="Amount">
@@ -37,7 +37,8 @@
 export default {
   name: 'CloverPayment',
   props: {
-    production: Boolean
+    production: Boolean,
+    action: String,
   },
   data: function () {
     return {

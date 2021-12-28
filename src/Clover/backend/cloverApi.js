@@ -1,4 +1,4 @@
-import axios from 'axios';
+const axios = require('axios');
 const { nanoid } = require('nanoid');
 
 async function completePayment(accessToken, payload) {
@@ -16,4 +16,13 @@ async function completePayment(accessToken, payload) {
       'content-type': 'application/json',
     }
   })
+}
+
+async function refundPayment(accessToken, payload) {
+  // todo
+}
+
+module.exports = {
+  completePayment,
+  refundPayment
 }

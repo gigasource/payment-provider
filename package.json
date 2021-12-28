@@ -1,6 +1,6 @@
 {
   "name": "payment-provider",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Library for payment providers like PayPal, adyen, square, klanar,... etc",
   "main": "index.js",
   "scripts": {
