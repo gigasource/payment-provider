@@ -1,7 +1,7 @@
 {
   "name": "payment-provider",
-  "version": "1.0.9",
-  "description": "Library for payment providers like PayPal, adyen, square, klanar,... etc",
+  "version": "1.0.10",
+  "description": "Library for payment providers like PayPal, Clover, Block, Nuvei... etc",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -17,9 +17,14 @@
   },
   "homepage": "https://github.com/gigasource/payment-provider#readme",
   "dependencies": {
-    "axios": "^0.24.0",
     "@paypal/checkout-server-sdk": "^1.0.2",
+    "axios": "^0.18.0",
+    "dayjs": "^1.8.14",
+    "fast-xml-parser": "^4.0.3",
+    "js-sha512": "^0.8.0",
+    "lodash": "^4.17.11",
     "nanoid": "^3.1.30",
-    "square": "^15.0.0"
+    "square": "^15.0.0",
+    "vue": "^3.2.26"
   }
 }
