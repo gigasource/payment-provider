@@ -38,7 +38,14 @@ const TransactionType = {
   AddPoints: 'AddPoints',
   Topup: 'Topup',
   Select: 'Select',
-  Pay: 'Pay'
+  Pay: 'Pay',
+  Status: 'Status',
+  Report: 'Report'
+}
+
+const ReportType = {
+  Summary: 'Summary',
+  Daily: 'Daily'
 }
 
 const SettlementType = {
@@ -80,6 +87,7 @@ const InputType = {
 
 module.exports = {
   PaymentType,
+  ReportType,
   TransactionType,
   SettlementType,
   Frequency,

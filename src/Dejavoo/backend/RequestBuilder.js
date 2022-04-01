@@ -47,6 +47,11 @@ class RequestBuilder {
     return this;
   }
 
+  addReportType(v) {
+    this._p['ReportType'] = v
+    return this;
+  }
+
   addMerchantId(v) {
     this._p['MerchantId'] = v
     return this;

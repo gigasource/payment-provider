@@ -1,6 +1,6 @@
 const axios = require('axios');
 const {AxiosError} = require('axios');
-const {InputType, PaymentType, TransactionType, PrintReceipt, SignatureCapture, Frequency} = require('./constants')
+const {InputType, ReportType, PaymentType, TransactionType, PrintReceipt, SignatureCapture, Frequency} = require('./constants')
 const XmpParser = require('./XmpParser')
 const RequestBuilder = require('./RequestBuilder')
 
@@ -15,7 +15,7 @@ class Dejavoo {
    * @param options
    */
   constructor(options) {
-    this.SPInProxy = options.SPInProxy || 'http://spinpos.net/spin'
+    this.SPInProxy = options.SPInProxy || 'https://spinpos.net/spin'
     this.terminalIp = options.terminalIp
     this.authKey = options.authKey
     this.registerId = options.registerId
@@ -34,6 +34,10 @@ class Dejavoo {
   async makeRequest(url) {
     const resp = await axios.get(url, { timeout: this.timeoutMs })
     return this._parseResponse(resp.data)
+  }
+  async makeTxRequest(requestData) {
+    const url = `${this.SPInProxy}/cgi.html?TerminalTransaction=${requestData}`
+    return this.makeRequest(url)
   }
   _parseResponse(respData) {
     return parser.parse(respData);
@@ -81,20 +85,17 @@ class Dejavoo {
    * @param printReceipt {PrintReceipt}
    * @return {Promise<void>}
    */
-  async getTransactionStatus({refId, paymentType, printReceipt}) {
+  async getTxStatus({refId, paymentType, printReceipt}) {
     try {
-      const requestData = new RequestBuilder(this.countryAlpha2Code)
-        .addTPN(this.terminalId)
+      const rq = new RequestBuilder(this.countryAlpha2Code)
         .addRegisterId(this.registerId)
         .addAuthKey(this.authKey)
         .addRefId(refId)
         .addPaymentType(paymentType)
-        .addTransactionType('Status')
+        .addTransactionType(TransactionType.Status)
         .addPrintReceipt(printReceipt)
-        .build()
-
-      const url = `${this.SPInProxy}/cgi.html?TerminalTransaction=${requestData}`
-      return await this.makeRequest(url)
+        .build();
+      return await this.makeTxRequest(rq)
     } catch (e) {
       let msg
       if (e.response) {
@@ -122,7 +123,7 @@ class Dejavoo {
    * @param tableNumber {string} table number, table id
    * @return {Promise<any>}
    */
-  async terminalTransactionRequest({
+  async requestTx({
                                      paymentType = PaymentType.Credit,
                                      transactionType = TransactionType.Sale,
                                      amount, tip = 0,
@@ -134,7 +135,7 @@ class Dejavoo {
                                      numberOfBeeps = 1,
                                      tableNumber = ''}) {
     try {
-      const txRequest = new RequestBuilder(this.countryAlpha2Code)
+      const rq = new RequestBuilder(this.countryAlpha2Code)
         .addPaymentType(paymentType)
         .addTransactionType(transactionType)
         .addAmount(amount)
@@ -151,11 +152,102 @@ class Dejavoo {
         .addAuthKey(this.authKey)
         .build();
 
-      const url = `${this.SPInProxy}/cgi.html?TerminalTransaction=${txRequest}`
-      return await this.makeRequest(url)
+      const data = await this.makeTxRequest(rq)
+      if (data.response) {
+        if (data.response.ExtData) {
+          data.response.ParsedExtData = {}
+          data.response.ExtData.split(',').map(kvp => {
+            const [k, v] = kvp.split('=')
+            data.response.ParsedExtData[k] = v
+          })
+        }
+        if (data.response.EMVData) {
+          data.response.ParsedEMVData = {}
+          data.response.EMVData.split(',').map(kvp => {
+            const [k, v] = kvp.split('=')
+            data.response.ParsedEMVData[k] = v
+          })
+        }
+      }
+      return data;
     } catch (e) {
       console.error(e)
-      throw e
+      throw new Error(e.message)
+    }
+  }
+
+  /**
+   * Capture Pre-Auth
+   * @param invoiceNumber {String} [mandatory] invoice number
+   * @param amount {Number} [mandatory] amount to capture
+   * @param tip {Number} [optional] [default = 0] tip
+   * @param refId {Number} [mandatory] Reference Id of PreAuth response
+   * @param authCode {Number} [mandatory] AuthCode in PreAuth response
+   * @param clerkId {Number} [optional] Clerk Id
+   * @return {Promise<any>} Capture response
+   */
+  async captureTx({invoiceNumber = '', amount, tip = 0, refId, authCode, clerkId}) {
+    try {
+      const rq = new RequestBuilder(this.countryAlpha2Code)
+        .addTransactionType(TransactionType.Capture)
+        .addInvoiceNumber(invoiceNumber)
+        .addAmount(amount)
+        .addTip(tip)
+        .addRefId(refId)
+        .addAuthCode(authCode)
+        .addClerkId(clerkId)
+        .addRegisterId(this.registerId)
+        .addAuthKey(this.authKey)
+        .build();
+      return await this.makeTxRequest(rq)
+    } catch (e) {
+      console.error('Capture request', e)
+      throw new Error(e.message)
+    }
+  }
+
+  /**
+   * Void Transaction is used to cancel a previously authorized transaction until the batch was closed.
+   * Host system must use data from the original transaction in order for the Terminal to locate the transaction and process Void request.
+   * @param paymentType {PaymentType} paymentType
+   * @param refId {Number} Reference id
+   * @param amount {Number} amount to void
+   * @return {Promise<any>} Void Tx Response
+   */
+  async voidTx({paymentType, refId, amount}) {
+    try {
+      const rq = new RequestBuilder(this.countryAlpha2Code)
+        .addPaymentType(paymentType)
+        .addTransactionType(TransactionType.Void)
+        .addRefId(refId)
+        .addAmount(amount)
+        .addRegisterId(this.registerId)
+        .addAuthKey(this.authKey)
+        .build();
+      return await this.makeTxRequest(rq)
+    } catch (e) {
+      console.error(e)
+      throw new Error(e.message)
+    }
+  }
+
+  /***
+   * Reportstatus request is used by the Host System to check what transactions are within the current batch stored in the terminal.
+   * @param reportType {ReportType} report type
+   * @return {Promise<void>} report Tx Status response
+   */
+  async reportTxStatus({reportType}) {
+    try {
+      const rq = new RequestBuilder(this.countryAlpha2Code)
+        .addTransactionType(TransactionType.Report)
+        .addReportType(reportType)
+        .addRegisterId(this.registerId)
+        .addAuthKey(this.authKey)
+        .build();
+      return await this.makeTxRequest(rq)
+    } catch (e) {
+      console.error('Capture request', e)
+      throw new Error(e.message)
     }
   }
 
@@ -167,14 +259,14 @@ class Dejavoo {
    */
   async printOut(fontSize, content) {
     try {
-      const printerRequest = new RequestBuilder(this.countryAlpha2Code)
+      const rq = new RequestBuilder(this.countryAlpha2Code)
         .addTPN(this.terminalId)
         .addRegisterId(this.registerId)
         .addAuthKey(this.authKey)
         .add(`<printer width="${fontSize}">${content}</printer>`)
         .build();
 
-      const url = `${this.SPInProxy}/cgi.html?Printer=${printerRequest}`
+      const url = `${this.SPInProxy}/cgi.html?Printer=${rq}`
       return await this.makeRequest(url)
     } catch (e) {
       console.error(e)
@@ -195,8 +287,7 @@ class Dejavoo {
         .addAuthKey(this.authKey)
         .add(`<UserChoice title="${title}" count="2"><Choice>Credit</Choice><Choice>Debit</Choice></UserChoice>`)
         .build();
-      const url = `${this.SPInProxy}/cgi.html?TerminalTransaction=${rq}`
-      return await this.makeRequest(url)
+      return await this.makeTxRequest(rq)
     } catch (e) {
       console.error(e)
       throw e
@@ -218,9 +309,7 @@ class Dejavoo {
         .addAuthKey(this.authKey)
         .add(`<UserInput title="${title}" maxlen="${maxLength}" type="${inputType}"/>`)
         .build();
-
-      const url = `${this.SPInProxy}/cgi.html?TerminalTransaction=${rq}`
-      return await this.makeRequest(url)
+      return await this.makeTxRequest(rq)
     } catch (e) {
       console.error(e)
       throw e
