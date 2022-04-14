@@ -1,10 +1,10 @@
-export const TextAlignment = {
+const TextAlignment = {
   left: 'l',
   center: 'c',
   right: 'r'
 }
 
-export default class PrintOutContentBuilder {
+module.exports = class PrintOutContentBuilder {
   constructor() {
     this.content = ''
   }
@@ -15,14 +15,14 @@ export default class PrintOutContentBuilder {
    * @param bold Indicates that text should be printed in bold
    * @param alignment Text aligtment
    */
-  txt(content, { bold = false, alignment = TextAlignment.left }) {
+  txt(content, options = { bold: false, alignment: TextAlignment.left }) {
     if (!content)
       throw "Missing content";
 
     if (content.length > 40)
       throw "Maximum content length is 40";
 
-    this.content += `<t><${alignment}>${bold ? '<b>': ''}${content}${bold ? '</b>' : ''}</${alignment}></t>`;
+    this.content += `<t><${options.alignment}>${options.bold ? '<b>': ''}${content}${options.bold ? '</b>' : ''}</${options.alignment}></t>`;
     return this
   }
 
@@ -59,3 +59,4 @@ export default class PrintOutContentBuilder {
     return this.content;
   }
 }
+module.exports.TextAlignment = TextAlignment;
