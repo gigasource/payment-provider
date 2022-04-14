@@ -82,6 +82,11 @@ class RequestBuilder {
     return this;
   }
 
+  addParam(v) {
+    this._p['Param'] = v
+    return this;
+  }
+
   addAuthCode(authCode) {
     this._p['AuthCode'] = authCode
     return this;
