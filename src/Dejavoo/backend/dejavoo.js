@@ -7,9 +7,6 @@ const RequestBuilder = require('./RequestBuilder')
 const parser = new XmpParser();
 
 class Dejavoo {
-  // Register ID – 90897001
-  // Auth Key - pKJLdTp5u5
-
   /**
    *
    * @param options
