@@ -1,6 +1,6 @@
 const axios = require('axios');
 const {AxiosError} = require('axios');
-const {InputType, ReportType, PaymentType, TransactionType, PrintReceipt, SignatureCapture, Frequency} = require('./constants')
+const {InputType, ReportType, PaymentType, TransactionType, PrintReceipt, SignatureCapture, Frequency, SettlementType} = require('./constants')
 const XmpParser = require('./XmpParser')
 const RequestBuilder = require('./RequestBuilder')
 
@@ -218,6 +218,56 @@ class Dejavoo {
         .addTransactionType(TransactionType.Void)
         .addRefId(refId)
         .addAmount(amount)
+        .addRegisterId(this.registerId)
+        .addAuthKey(this.authKey)
+        .build();
+      return await this.makeTxRequest(rq)
+    } catch (e) {
+      console.error(e)
+      throw new Error(e.message)
+    }
+  }
+
+  async returnTx({ paymentType,
+                   refId,
+                   amount,
+                   tip,
+                   printReceipt = PrintReceipt.No,
+                   sigCapture = SignatureCapture.No,
+                   invoiceNumber = '',
+                   numberOfBeeps = 1,
+                   tableNumber = ''
+                 })
+  {
+    try {
+      const rq = new RequestBuilder(this.countryAlpha2Code)
+        .addPaymentType(paymentType)
+        .addTransactionType(TransactionType.Return)
+        .addRefId(refId)
+        .addAmount(amount)
+        .addTip(tip)
+        .addPrintReceipt(printReceipt)
+        .addAlert(numberOfBeeps)
+        .addSigCapture(sigCapture)
+        .addInvoiceNumber(invoiceNumber)
+        .addTableNumber(tableNumber)
+        .addRegisterId(this.registerId)
+        .addAuthKey(this.authKey)
+        .build();
+      return await this.makeTxRequest(rq)
+    } catch (e) {
+      console.error(e)
+      throw new Error(e.message)
+    }
+  }
+
+
+  async settlement({refId, param = SettlementType.Close}) {
+    try {
+      const rq = new RequestBuilder(this.countryAlpha2Code)
+        .addTransactionType(TransactionType.Settle)
+        .addParam(param)
+        .addRefId(refId)
         .addRegisterId(this.registerId)
         .addAuthKey(this.authKey)
         .build();
