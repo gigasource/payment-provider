@@ -26,6 +26,7 @@
     "lodash": "^4.17.11",
     "nanoid": "^3.1.30",
     "square": "^15.0.0",
+    "stripe": "^9.16.0",
     "vue": "^3.2.26"
   },
   "devDependencies": {
