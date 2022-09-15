@@ -43,57 +43,37 @@
   </form>
 </template>
 <script>
+import {injectScript} from '../../payment-provider-utils';
+
+const POLYFILL_URL = 'https://cdn.polyfill.io/v3/polyfill.min.js'
+const CLOVER_PROD_SDK = 'https://checkout.clover.com/sdk.js'
+const CLOVER_SANDBOX_SDK = 'https://checkout.sandbox.dev.clover.com/sdk.js'
+
 export default {
   name: 'CloverPayment',
   props: {
     production: Boolean,
     action: String,
     amount: Number,
-  },
-  data: function () {
-    return {
-      polyFillLoaded: false,
-      sdkLoaded: false
-    }
+    merchantPublicKey: String
   },
   mounted() {
-    const polyFillHref = 'https://cdn.polyfill.io/v3/polyfill.min.js';
-    let polyFillScript = document.querySelector(`script[src="${polyFillHref}"]`);
-    if (!polyFillHref) {
-      console.log('loading polyfill...')
-      polyFillScript = document.createElement('script');
-      polyFillScript.type = 'text/javascript';
-      polyFillScript.src = polyFillHref;
-      script.onload(() => {
-        console.log('polyfill loaded...')
-        this.polyFillLoaded = true
+    injectScript(POLYFILL_URL)
+    .catch(console.error)
+    .finally(() => {
+      injectScript(this.production ? CLOVER_PROD_SDK : CLOVER_SANDBOX_SDK).then(() => {
         this.initCloverPayment()
+      }).catch(e => {
+        const msg = e.message
+        console.error(msg)
+        alert(msg)
       })
-    }
-
-    const sdkHref = this.production ? 'https://checkout.clover.com/sdk.js' : 'https://checkout.sandbox.dev.clover.com/sdk.js'
-    let script = document.querySelector(`script[src="${sdkHref}"]`);
-    if (!script) {
-      console.log('Loading CloverSDK...');
-      script = document.createElement('script');
-      script.type = 'text/javascript';
-      script.src = sdkHref;
-      script.onload = () => {
-        console.log('CloverSDK loaded.')
-        this.sdkLoaded = true
-        this.initCloverPayment()
-      }
-      document.body.appendChild(script)
-    }
-
-    if (script && polyFillScript) {
-      this.initCloverPayment()
-    }
+    })
   },
   computed: {},
   methods: {
     initCloverPayment() {
-      const clover = new Clover('39c7b87101f44739c823362203d21f89');
+      const clover = new Clover(this.merchantPublicKey);
       const elements = clover.elements();
 
       const inputStyle = {
@@ -139,62 +119,36 @@ export default {
       }
 
       // Handle real-time validation errors from the card element
-      cardNumber.addEventListener('change', function(event) {
-        console.log(`cardNumber changed ${JSON.stringify(event)}`);
-      });
+      cardNumber.addEventListener('change', event => console.log(`cardNumber changed ${JSON.stringify(event)}`))
+      cardNumber.addEventListener('blur', event => console.log(`cardNumber blur ${JSON.stringify(event)}`))
+      cardDate.addEventListener('change', event => console.log(`cardDate changed ${JSON.stringify(event)}`))
+      cardDate.addEventListener('blur', event => console.log(`cardDate blur ${JSON.stringify(event)}`))
+      cardCvv.addEventListener('change', event => console.log(`cardCvv changed ${JSON.stringify(event)}`))
+      cardCvv.addEventListener('blur', event => console.log(`cardCvv blur ${JSON.stringify(event)}`))
+      cardPostalCode.addEventListener('change', event =>  console.log(`cardPostalCode change ${JSON.stringify(event)}`))
+      cardPostalCode.addEventListener('blur', event =>  console.log(`cardPostalCode blur ${JSON.stringify(event)}`))
 
-      cardNumber.addEventListener('blur', function(event) {
-        console.log(`cardNumber blur ${JSON.stringify(event)}`);
-      });
-
-      cardDate.addEventListener('change', function(event) {
-        console.log(`cardDate changed ${JSON.stringify(event)}`);
-      });
-
-      cardDate.addEventListener('blur', function(event) {
-        console.log(`cardDate blur ${JSON.stringify(event)}`);
-      });
-
-      cardCvv.addEventListener('change', function(event) {
-        console.log(`cardCvv changed ${JSON.stringify(event)}`);
-      });
-
-      cardCvv.addEventListener('blur', function(event) {
-        console.log(`cardCvv blur ${JSON.stringify(event)}`);
-      });
-
-      cardPostalCode.addEventListener('change', function(event) {
-        console.log(`cardPostalCode changed ${JSON.stringify(event)}`);
-      });
-
-      cardPostalCode.addEventListener('blur', function(event) {
-        console.log(`cardPostalCode blur ${JSON.stringify(event)}`);
-      });
-
-
-
-      form.addEventListener('submit', function(event) {
-        event.preventDefault();
+      form.addEventListener('submit', e => {
+        e.preventDefault();
         // Use the iframe's tokenization method with the user-entered card details
         clover.createToken()
-        .then(function(result) {
+        .then(result => {
           if (result.errors) {
             console.log('result.errors', result.errors)
-            Object.keys(result.errors).forEach(function (key) {
-              const value = result.errors[key];
-              debugger
-              displayError[key].innerText = value;
-            });
+            Object.keys(result.errors).forEach(key => {
+              const value = result.errors[key]
+              displayError[key].innerText = value
+            })
           } else {
-            cloverTokenHandler(result.token);
+            this.cloverTokenHandler(result.token);
           }
         });
       });
     },
     cloverTokenHandler(token) {
       // Insert the token ID into the form so it gets submitted to the server
-      var form = document.getElementById('payment-form');
-      var hiddenInput = document.createElement('input');
+      const form = document.getElementById('payment-form');
+      const hiddenInput = document.createElement('input');
       hiddenInput.setAttribute('type', 'hidden');
       hiddenInput.setAttribute('name', 'cloverToken');
       hiddenInput.setAttribute('value', token);

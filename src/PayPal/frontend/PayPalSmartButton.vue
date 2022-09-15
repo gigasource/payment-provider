@@ -8,8 +8,8 @@
     </div>
   </div>
 </template>
-
 <script>
+import {injectScript} from '../../payment-provider-utils';
   // https://developer.paypal.com/docs/checkout/reference/customize-sdk/#query-parameters
   export default {
     name: 'PayPalSmartButton',
@@ -62,17 +62,10 @@
     },
     mounted() {
       const sdkHref = this.buildSdkHref();
-      let script = document.querySelector(`script[src="${sdkHref}"]`);
-      if (!script) {
-        this.debug && console.log('Loading PayPal sdk...');
-        script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = sdkHref;
-        script.onload = () => this.sdkLoaded = true;
-        document.body.appendChild(script)
-      } else {
-        this.sdkLoaded = true
-      }
+      injectScript(sdkHref).then(() => this.sdkLoaded = true).catch((e) => {
+        console.error(e)
+        alert('Error: Failed to load Paypal sdk')
+      })
     },
     watch: {
       orderInfo() {

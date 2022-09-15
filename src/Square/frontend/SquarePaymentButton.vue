@@ -10,30 +10,24 @@
   </div>
 </template>
 <script>
+import {injectScript} from '../../payment-provider-utils';
 export default {
   name: 'SquarePaymentButton',
   props: {
     appId: String,
     locationId: String,
+    production: Boolean
   },
   mounted() {
-    const sdkHref = 'https://sandbox.web.squarecdn.com/v1/square.js'
-    let script = document.querySelector(`script[src="${sdkHref}"]`);
-    if (!script) {
-      console.log('Loading SquareSdk...');
-      script = document.createElement('script');
-      script.type = 'text/javascript';
-      script.src = sdkHref;
-      script.onload = () => {
-        console.log('SquareSdk loaded.')
-        this.sdkLoaded = true
-        this.initSquareCardButton()
-      }
-      document.body.appendChild(script)
-    } else {
+    const sdkSrc = this.production ?'https://web.squarecdn.com/v1/square.js' : 'https://sandbox.web.squarecdn.com/v1/square.js'
+    injectScript(sdkSrc).then(() => {
       this.sdkLoaded = true
       this.initSquareCardButton()
-    }
+    }).catch(e => {
+      const msg = `load square sdk failed with error ${e.message}`
+      console.error(msg)
+      alert(msg)
+    })
   },
   data() {
     return {
@@ -48,7 +42,9 @@ export default {
         this.__card = await payments.card();
         await this.__card.attach('#card-container')
       } catch (e) {
-        console.error('init square card button failed', e)
+        const msg = `init square card button failed with error ${e.message}`
+        console.error(msg)
+        alert(msg)
       }
     },
     async getToken() {

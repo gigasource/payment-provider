@@ -16,25 +16,24 @@ import axios from 'axios';
 // How to Capture payment
 
 export default {
-  name: 'NuveiPreAuthHppDialog',
   props: {
     preAuthUrl: String,
-    terminalId: String,
-    currencySymbol: String,
-    orderId: String,
-    amount: Number,
-    storeId: String,
-    cardHolderName: String,
     receiptPageUrl: String,
     getHashUrl: String,
+    terminalId: String,
+    storeId: String,
+    orderId: String,
+    amount: Number,
+    currencySymbol: String,
+    cardHolderName: String,
   },
-  setup(props, ctx) {
-    const nuveiIframeUrl = ref()
-    const nuveiPaymentVisible = ref(false)
+  setup(props) {
+    const iframeUrl = ref()
+    const visible = ref(false)
 
     const hideNuveiPayment = () => {
-      nuveiPaymentVisible.value = false
-      nuveiIframeUrl.value = ''
+      visible.value = false
+      iframeUrl.value = ''
     }
 
     const showNuveiPayment = async () => {
@@ -66,20 +65,20 @@ export default {
         // custom query will be send to receipt page url
         STOREID: props.storeId, // for querying payment for which store
       };
-      const qryStr = Object.keys(qryObj).map(k => `${k}=${qryObj[k]}`).join('&');
-      nuveiIframeUrl.value = `${props.preAuthUrl}?INIFRAME&${qryStr}`;
-      nuveiPaymentVisible.value = true
+      const qryStr = Object.keys(qryObj).map(k => `${k}=${qryObj[k]}`).join('&')
+      iframeUrl.value = `${props.preAuthUrl}?INIFRAME&${qryStr}`
+      visible.value = true
     }
 
     const renderFn = () =>
-      <g-dialog v-model={nuveiPaymentVisible.value} fullscreen eager persistent>
+      <g-dialog v-model={visible.value} fullscreen eager persistent>
         <div class="w-100 h-100 bg-white">
           <div style="height: 30px" class="row-flex justify-end">
             <g-icon onClick={hideNuveiPayment}>close</g-icon>
           </div>
           <iframe
               style="width: 100%; height: calc(100% - 40px); border: none;"
-              src={nuveiIframeUrl.value}
+              src={iframeUrl.value}
               allowpaymentrequest/>
         </div>
       </g-dialog>
