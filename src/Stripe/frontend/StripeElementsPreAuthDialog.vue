@@ -1,17 +1,21 @@
 <template>
-  <g-dialog v-model={stripePaymentVisible} fullscreen eager persistent>
-    <div class="w-100 h-100 bg-white">
+  <g-dialog v-model="visible" eager persistent>
+    <div class="bg-white" style="min-width: 300px; min-height: 300px; margin: 0 auto; padding: 36px; border-radius: 6px">
       <div style="height: 30px" class="row-flex justify-end">
-        <g-icon @click="hide">close</g-icon>
+        <g-icon @click="hide" class="clickable">close</g-icon>
       </div>
       <form id="payment-form" @submit="handleSubmit">
-        <div id="payment-element">
+        <div id="payment-element" style="min-height: 200px;">
           <!--Stripe.js injects the Payment Element-->
         </div>
-        <button id="submit">
-          <div class="spinner hidden" id="spinner"/>
-          <span id="button-text">Pay now</span>
-        </button>
+        <div v-if="scriptInjecting" class="ta-center">Loading script...</div>
+        <div v-if="initializing" class="ta-center">Initializing...</div>
+        <div class="row-flex justify-center mt-4">
+          <button id="submit" class="w-100" style="background-color: #2979FF; border: none; height: 30px; border-radius: 15px; color: #fff;">
+            <div class="spinner hidden" id="spinner"/>
+            <span id="button-text">Pay now</span>
+          </button>
+        </div>
         <div id="payment-message" class="hidden"></div>
       </form>
     </div>
@@ -24,7 +28,7 @@ import axios from 'axios';
 export default {
   props: {
     preAuthUrl: String,
-    receiptPageUrl: String,
+    publicKey: String,
     storeId: String,
     orderId: String,
     amount: Number,
@@ -32,20 +36,38 @@ export default {
   },
   data() {
     return {
-      stripePaymentVisible: false
+      visible: false,
+      scriptInjecting: false,
+      initializing: false,
+      initialized: false
     }
   },
-  mounted() {
-    injectScript('https://js.stripe.com/v3/').then(() => {
-      this.initialize()
-    }).catch(e => {
-      const msg = `Failed to load Stripe Sdk with error ${e.message}`
-      console.error(msg)
-      alert(msg)
-    })
+  watch: {
+    visible() {
+      if (this.visible && !this.initialized) {
+        this.scriptInjecting = true;
+        injectScript('https://js.stripe.com/v3/').then(() => {
+          this.scriptInjecting = false
+          this.initialize()
+        }).catch(e => {
+          this.scriptInjecting = false
+          const msg = `Failed to load Stripe Sdk with error ${e.message}`
+          console.error(msg)
+          alert(msg)
+        })
+      }
+    }
   },
   methods: {
     async initialize() {
+      if (!window.Stripe) {
+        console.error('Stripe SDK is not initialized')
+        return
+      }
+
+      this.initializing = true
+      this.stripe = Stripe(this.publicKey)
+
       const {data} = await axios.post(this.preAuthUrl, {
         storeId: this.storeId,
         orderId: this.orderId,
@@ -54,30 +76,31 @@ export default {
       })
       const {clientSecret} = data
       const appearance = {theme: 'stripe'}
-      this.elements = stripe.elements({appearance, clientSecret});
-      const paymentElement = elements.create('payment')
+      this.elements = this.stripe.elements({appearance, clientSecret});
+      const paymentElement = this.elements.create('payment')
       paymentElement.mount('#payment-element')
+
+      this.initializing = false
+      this.initialized = true
     },
     async handleSubmit(e) {
       e.preventDefault()
       this.setLoading(true)
 
-      const {error} = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: this.receiptPageUrl
-        }
+      // https://stripe.com/docs/js/payment_intents/confirm_payment#confirm_payment_intent-options-redirect
+      const {error, paymentIntent} = await this.stripe.confirmPayment({
+        elements: this.elements,
+        redirect: 'if_required'
       })
 
-      // This point will only be reached if there is an immediate error when
-      // confirming the payment. Otherwise, your customer will be redirected to
-      // your `return_url`. For some payment methods like iDEAL, your customer will
-      // be redirected to an intermediate site first to authorize the payment, then
-      // redirected to the `return_url`.
-      if (error.type === 'card_error' || error.type === 'validation_error') {
-        this.showMessage(error.message)
+      if (error) {
+        if (error.type === 'card_error' || error.type === 'validation_error') {
+          this.showMessage(error.message)
+        } else {
+          this.showMessage('An unexpected error occurred.')
+        }
       } else {
-        this.showMessage('An unexpected error occurred.')
+        this.$emit('onApprove', paymentIntent)
       }
 
       this.setLoading(false)
@@ -106,10 +129,10 @@ export default {
       }
     },
     show() {
-      this.stripePaymentVisible = true
+      this.visible = true
     },
     hide() {
-      this.stripePaymentVisible = false
+      this.visible = false
     }
   }
 }
