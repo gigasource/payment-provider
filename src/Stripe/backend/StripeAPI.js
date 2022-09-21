@@ -15,7 +15,17 @@ class StripeAPI {
     }
 
     if (this.options && this.options.stripeAccount) {
-      payload.application_fee_amount = this.options.application_fee_amount;
+      let appFeeAmount = this.options.application_fee_amount
+      let appFee;
+      if (typeof appFeeAmount === 'string') {
+        if (appFeeAmount.indexOf('%') > 0) {  // percentage
+          appFeeAmount = Number(appFeeAmount.replace('%', ''))
+          appFee = _.round(+amount * appFeeAmount / 100, 0)
+        } else { // fixed value
+          appFee = Number(appFeeAmount)
+        }
+      }
+      payload.application_fee_amount = appFee;
       payload.transfer_data = {
         destination: this.options.stripeAccount,
       }
