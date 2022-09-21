@@ -1,6 +1,6 @@
 {
   "name": "payment-provider",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Library for payment providers like PayPal, Clover, Block, Nuvei... etc",
   "main": "index.js",
   "scripts": {
