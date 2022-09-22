@@ -1,4 +1,4 @@
-export function injectScript(url) {
+export async function injectScript(url) {
   if (document.querySelector(`script[src="${url}"]`))
     return true
 
