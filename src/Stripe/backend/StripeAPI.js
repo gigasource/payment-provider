@@ -1,4 +1,5 @@
 const StripeSDK = require('stripe')
+const _ = require('lodash')
 
 class StripeAPI {
   constructor(apiKey, options) {
@@ -30,8 +31,7 @@ class StripeAPI {
         destination: this.options.stripeAccount,
       }
     }
-    const paymentIntent = await this.stripe.paymentIntents.create(payload)
-    return paymentIntent
+    return await this.stripe.paymentIntents.create(payload)
   }
 
   async capture(paymentIntentId) {
