@@ -29,6 +29,7 @@ export default {
   props: {
     preAuthUrl: String,
     publicKey: String,
+    stripAccount: String,
     storeId: String,
     orderId: String,
     amount: Number,
@@ -66,7 +67,11 @@ export default {
       }
 
       this.initializing = true
-      this.stripe = Stripe(this.publicKey)
+      if (this.stripAccount) {
+        this.stripe = Stripe(this.publicKey, { stripAccount: this.stripAccount })
+      } else {
+        this.stripe = Stripe(this.publicKey)
+      }
 
       const {data} = await axios.post(this.preAuthUrl, {
         storeId: this.storeId,
