@@ -29,7 +29,7 @@ export default {
   props: {
     preAuthUrl: String,
     publicKey: String,
-    stripAccount: String,
+    stripeAccount: String,
     storeId: String,
     orderId: String,
     amount: Number,
@@ -67,8 +67,8 @@ export default {
       }
 
       this.initializing = true
-      if (this.stripAccount) {
-        this.stripe = Stripe(this.publicKey, { stripAccount: this.stripAccount })
+      if (this.stripeAccount) {
+        this.stripe = Stripe(this.publicKey, { stripeAccount: this.stripeAccount })
       } else {
         this.stripe = Stripe(this.publicKey)
       }
