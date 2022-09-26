@@ -67,11 +67,7 @@ export default {
       }
 
       this.initializing = true
-      if (this.stripeAccount) {
-        this.stripe = Stripe(this.publicKey, { stripeAccount: this.stripeAccount })
-      } else {
-        this.stripe = Stripe(this.publicKey)
-      }
+      this.stripe = Stripe(this.publicKey)
 
       const {data} = await axios.post(this.preAuthUrl, {
         storeId: this.storeId,

@@ -43,11 +43,12 @@ class StripeAPI {
     if (paymentIntent.status === 'requires_capture') { // being hold -> cancel
       return this.stripe.paymentIntents.cancel(paymentIntentId, {cancellation_reason: 'requested_by_customer'})
     } else { // captured -> refund
-      if (this.options && this.options.stripeAccount) {
-        return this.stripe.refunds.create({payment_intent: paymentIntentId}, {stripeAccount: this.options.stripeAccount})
-      } else {
-        return this.stripe.refunds.create({payment_intent: paymentIntentId})
-      }
+      return this.stripe.refunds.create({payment_intent: paymentIntentId})
+      // if (this.options && this.options.stripeAccount) {
+      //   return this.stripe.refunds.create({payment_intent: paymentIntentId}, {stripeAccount: this.options.stripeAccount})
+      // } else {
+      //   return this.stripe.refunds.create({payment_intent: paymentIntentId})
+      // }
     }
   }
 }
